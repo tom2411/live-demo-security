@@ -5,6 +5,7 @@ import fr.univ.orleans.webservices.livedemosecurity.modele.Message;
 import fr.univ.orleans.webservices.livedemosecurity.modele.Utilisateur;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -91,6 +92,16 @@ public class MessageController {
         if (!principal.getName().equals(login)){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+        if (utilisateurs.containsKey(login)){
+            return ResponseEntity.ok().body(utilisateurs.get(login));
+        }else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/utilisateurs2/{login}")
+    @PreAuthorize("#login == authentication.principal.username")
+    public ResponseEntity<Utilisateur> findUtilisateurById2(@PathVariable("login") String login){
         if (utilisateurs.containsKey(login)){
             return ResponseEntity.ok().body(utilisateurs.get(login));
         }else {

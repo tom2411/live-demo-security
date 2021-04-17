@@ -23,5 +23,5 @@ Content-Type: application/json
 {"login": "thomas", "password": "thomas", "isAdmin":  true}
 
 ###
-GET http://localhost:8080/api/utilisateurs/thomas
-Authorization: Basic thomas thomas
+GET http://localhost:8080/api/utilisateurs2/tom
+Authorization: Basic admin admin
