@@ -1,8 +1,11 @@
 package fr.univ.orleans.webservices.livedemosecurity.controller;
 
-import ch.qos.logback.classic.pattern.Util;
+import fr.univ.orleans.webservices.livedemosecurity.facade.MessageFacade;
+import fr.univ.orleans.webservices.livedemosecurity.facade.MessageFacadeImpl;
+import fr.univ.orleans.webservices.livedemosecurity.facade.UtilisateurFacade;
 import fr.univ.orleans.webservices.livedemosecurity.modele.Message;
 import fr.univ.orleans.webservices.livedemosecurity.modele.Utilisateur;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,25 +21,18 @@ import java.util.function.Predicate;
 @RestController
 @RequestMapping("/api")
 public class MessageController {
-    private static List<Message> messages = new ArrayList<>();
-    private final AtomicLong counter = new AtomicLong(1L);
+    /*private static List<Message> messages = new ArrayList<>();
+    private final AtomicLong counter = new AtomicLong(1L);*/
+    @Autowired
+    MessageFacade messageFacade;
 
-    private static Map<String, Utilisateur> utilisateurs = new TreeMap<>();
-    public static Map<String,Utilisateur> getUtilisateurs(){
-        return utilisateurs;
-    }
-    static {
-        Utilisateur tom = new Utilisateur("tom","tom",false);
-        Utilisateur admin = new Utilisateur("admin","admin",true);
-        utilisateurs.put(tom.getLogin(),tom);
-        utilisateurs.put(admin.getPassword(),admin);
-    }
+    @Autowired
+    UtilisateurFacade utilisateurFacade;
 
     @PostMapping("/messages")
-    public ResponseEntity<Message> create(Principal principal, @RequestBody Message message){
+    public ResponseEntity<Message> create(Principal principal, @RequestBody Message message) {
         String login = principal.getName();
-        Message messageRec = new Message(counter.getAndIncrement(),login+": "+ message.getTexte());
-        messages.add(messageRec);
+        Message messageRec = messageFacade.newMessage(login + ": " + message.getTexte());
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest().path("/{id}")
@@ -46,39 +42,40 @@ public class MessageController {
     }
 
     @GetMapping("/messages")
-    public ResponseEntity<List<Message>> getAll(){ return ResponseEntity.ok().body(messages);}
+    public ResponseEntity<List<Message>> getAll() {
+        return ResponseEntity.ok().body(messageFacade.getMessages());
+    }
 
     @GetMapping("/messages/{id}")
-    public ResponseEntity<Message> findById(@PathVariable("id") Long id){
-        Optional<Message> message = messages.stream().filter(m->m.getId()==id).findAny();
-        if (message.isPresent()){
+    public ResponseEntity<Message> findById(@PathVariable("id") Long id) {
+        Optional<Message> message = messageFacade.getMessage(id);
+        if (message.isPresent()) {
             return ResponseEntity.ok().body(message.get());
-        }else{
+        } else {
             return ResponseEntity.notFound().build();
         }
     }
 
     @DeleteMapping("/messages/{id}")
-    public ResponseEntity<Message> deleteById(@PathVariable("id") Long id){
-        for (int index = 0; index < messages.size(); index++) {
-            if (messages.get(index).getId()==id){
-                messages.remove(index);
-                return ResponseEntity.noContent().build();
-            }
+    public ResponseEntity<Message> deleteById(@PathVariable("id") Long id) {
+        boolean removeSuccess = messageFacade.removeMessage(id);
+        if (removeSuccess){
+            return ResponseEntity.noContent().build();
+        }else {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
     }
 
     @PostMapping("/utilisateurs")
-    public ResponseEntity<Utilisateur> enregistreUtilisateur(@RequestBody Utilisateur utilisateur){
-        Predicate<String> isOk = s -> (s!=null)&&(s.length()>=2);
-        if (!isOk.test(utilisateur.getLogin()) || !isOk.test(utilisateur.getPassword())){
+    public ResponseEntity<Utilisateur> enregistreUtilisateur(@RequestBody Utilisateur utilisateur) {
+        Predicate<String> isOk = s -> (s != null) && (s.length() >= 2);
+        if (!isOk.test(utilisateur.getLogin()) || !isOk.test(utilisateur.getPassword())) {
             return ResponseEntity.badRequest().build();
         }
-        if (utilisateurs.containsKey(utilisateur.getLogin())){
+        if (utilisateurFacade.utilisateurExist(utilisateur.getLogin())) {
             return ResponseEntity.badRequest().build();
         }
-        utilisateurs.put(utilisateur.getLogin(),utilisateur);
+        utilisateurFacade.addUtilisateur(utilisateur.getLogin(), utilisateur);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest().path("/{id}")
@@ -88,23 +85,23 @@ public class MessageController {
     }
 
     @GetMapping("/utilisateurs/{login}")
-    public ResponseEntity<Utilisateur> findUtilisateurById(Principal principal, @PathVariable("login") String login){
-        if (!principal.getName().equals(login)){
+    public ResponseEntity<Utilisateur> findUtilisateurById(Principal principal, @PathVariable("login") String login) {
+        if (!principal.getName().equals(login)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        if (utilisateurs.containsKey(login)){
-            return ResponseEntity.ok().body(utilisateurs.get(login));
-        }else {
+        if (utilisateurFacade.utilisateurExist(login)) {
+            return ResponseEntity.ok().body(utilisateurFacade.getUtilisateur(login));
+        } else {
             return ResponseEntity.notFound().build();
         }
     }
 
     @GetMapping("/utilisateurs2/{login}")
     @PreAuthorize("#login == authentication.principal.username")
-    public ResponseEntity<Utilisateur> findUtilisateurById2(@PathVariable("login") String login){
-        if (utilisateurs.containsKey(login)){
-            return ResponseEntity.ok().body(utilisateurs.get(login));
-        }else {
+    public ResponseEntity<Utilisateur> findUtilisateurById2(@PathVariable("login") String login) {
+        if (utilisateurFacade.utilisateurExist(login)) {
+            return ResponseEntity.ok().body(utilisateurFacade.getUtilisateur(login));
+        } else {
             return ResponseEntity.notFound().build();
         }
     }

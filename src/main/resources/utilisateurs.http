@@ -1,0 +1,47 @@
+###
+POST http://localhost:8080/api/utilisateurs
+Authorization: Basic admin admin
+Content-Type: application/json
+
+{
+  "login": "thomas",
+  "password": "thomas",
+  "isAdmin": true
+}
+
+> {%
+client.global.set("userCreated", response.headers.valueOf("Location"))
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 201, "Response status is not 201");
+});
+%}
+
+###
+GET {{userCreated}}
+Authorization: Basic thomas thomas
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 200");
+});
+%}
+
+###
+GET http://localhost:8080/api/utilisateurs2/admin
+Authorization: Basic admin admin
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 200");
+});
+%}
+
+###
+GET http://localhost:8080/api/utilisateurs2/admin
+Authorization: Basic tom tom
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 403, "Response status is not 403");
+});
+%}

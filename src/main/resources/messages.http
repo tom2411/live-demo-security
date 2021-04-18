@@ -1,0 +1,64 @@
+GET http://localhost:8080/api/messages
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 200");
+});
+%}
+
+###
+POST http://localhost:8080/api/messages
+Authorization: Basic tom tom
+Content-Type: application/json
+
+{"texte": "CC! I'm alive"}
+
+> {%
+client.global.set("messageCreated", response.headers.valueOf("Location"))
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 201, "Response status is not 201");
+});
+%}
+
+###
+GET {{messageCreated}}
+Authorization: Basic admin admin
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 200");
+});
+%}
+
+###
+GET http://localhost:8080/api/messages/5
+Authorization: Basic admin admin
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 404, "Response status is not 404");
+});
+%}
+###
+POST http://localhost:8080/api/messages
+Authorization: Basic test test
+Content-Type: application/json
+
+{"texte": "CC! I'm alive"}
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 401, "Response status is not 401");
+});
+%}
+
+
+###
+DELETE http://localhost:8080/api/messages/1
+Authorization: Basic admin admin
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 204, "Response status is not 204");
+});
+%}
