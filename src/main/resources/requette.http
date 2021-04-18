@@ -2,7 +2,7 @@ GET http://localhost:8080/api/messages
 
 ###
 POST http://localhost:8080/api/messages
-Authorization: Basic yohan yohan
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0b20iLCJI6WyJST0xFX1VTRVIiXSwiZXhwIjoxNjE4NzU5MDg1fQ.3I2DpYy6C4qzCGEvl2pJn8UDIrncjQZLN6rjLTTlx3U
 Content-Type: application/json
 
 {"texte": "CC! I'm alive"}
@@ -17,7 +17,7 @@ Authorization: Basic admin admin
 
 ###
 POST http://localhost:8080/api/utilisateurs
-Authorization: Basic admin admin
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlJPTEVfQURNSU4iLCJST0xFX1VTRVIiXSwiZXhwIjoxNjE4NzU5MjIwfQ.sw4zhgxu5wGMPpFxIwn9cXh83NOa2GHpc_-rXGOVgfU
 Content-Type: application/json
 
 {"login": "thomas", "password": "thomas", "isAdmin":  true}
@@ -25,3 +25,9 @@ Content-Type: application/json
 ###
 GET http://localhost:8080/api/utilisateurs2/tom
 Authorization: Basic admin admin
+
+###
+POST http://localhost:8080/api/login?username=tom&password=tom
+
+###
+POST http://localhost:8080/api/login?username=admin&password=admin

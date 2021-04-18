@@ -1,5 +1,8 @@
 package fr.univ.orleans.webservices.livedemosecurity.config;
 
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -14,24 +17,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import javax.crypto.SecretKey;
 
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-    /*@Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-                .withUser("tom").password("{noop}tom").roles("USER")
-                .and()
-                .withUser("admin").password("{noop}admin").roles("USER","ADMIN");
-    /*{bcrypt} for BCryptPasswordEncoder,
-    {noop} for NoOpPasswordEncoder,
-    {pbkdf2} for Pbkdf2PasswordEncoder,
-    {scrypt} for SCryptPasswordEncoder,
-    {sha256} for StandardPasswordEncoder
-    }*/
-
+    @Autowired
+    private JwtTokens jwtTokens;
 
     @Bean
     @Override
@@ -43,17 +38,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.
                 csrf().disable()
+                .addFilter(new JwtAuthenticationFilter(authenticationManager(),jwtTokens))
+                .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtTokens))
                 .authorizeRequests()
                 .antMatchers(HttpMethod.GET,"/api/messages").permitAll()
                 .antMatchers(HttpMethod.DELETE,"/api/**").hasRole("ADMIN")
                 .antMatchers(HttpMethod.POST, "/api/utilisateurs").hasRole("ADMIN")
                 .anyRequest().hasRole("USER")
-                .and().httpBasic()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public SecretKey getSecretKey(){
+        return Keys.secretKeyFor(SignatureAlgorithm.HS256);
     }
 }
