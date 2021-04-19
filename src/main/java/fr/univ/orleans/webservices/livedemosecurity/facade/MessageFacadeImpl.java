@@ -23,7 +23,7 @@ public class MessageFacadeImpl implements MessageFacade {
     }
 
     @Override
-    public Optional<Message> getMessage(long id) {
+    public Optional<Message> getMessage(long id) throws MessageNotFoundException {
         Optional<Message> message = this.messages.stream().filter(m -> m.getId() == id).findAny();
         if (message.isEmpty()) {
             throw new MessageNotFoundException();

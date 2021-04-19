@@ -29,11 +29,6 @@ public class UtilisateurFacadeImpl implements UtilisateurFacade {
     }
 
     @Override
-    public Utilisateur newUtilisateur(String username, String password, boolean isAdmin) {
-        return null;
-    }
-
-    @Override
     public boolean utilisateurExist(String username) {
         return utilisateurs.containsKey(username);
     }
